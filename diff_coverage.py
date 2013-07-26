@@ -24,6 +24,7 @@ import patch
 import re
 import sys
 import webbrowser
+from pprint import pprint
 
 
 django_path = os.path.abspath(os.path.dirname(os.path.dirname(django.__file__)))
@@ -33,6 +34,7 @@ line_end = '(?:\n|\r\n?)'
 patch_logger = logging.getLogger('patch')
 patch_logger.addHandler(logging.NullHandler())
 
+PATH_FIX = '^[a|b]{1,2}/'
 # pattern to use to insert new stylesheet
 # this is currently pretty brittle - but lighterweight than doing something with
 # lxml and/or pyquery
@@ -44,15 +46,16 @@ def parse_patch(patch_file):
     """
     patch_set = patch.fromfile(patch_file)
     target_files = set()
-    target_files.update([os.path.join(django_path, p.target.lstrip('/ab')) for p in patch_set.items])
+    target_files.update([os.path.join(django_path, re.sub(PATH_FIX, '', p.target)) for p in patch_set.items])
     target_files = [p for p in target_files if 'test' not in p]
     target_files = [p for p in target_files if 'docs' not in p]
     target_files = [p for p in target_files if os.path.exists(p)]
     target_lines = defaultdict(list)
 
     for p in patch_set.items:
-        source_file = os.path.join(django_path, p.target)
+        source_file = os.path.join(django_path, re.sub(PATH_FIX, '', p.target))
         if source_file not in target_files:
+            # skip files filtered out above
             continue
         source_lines = []
         last_hunk_offset = 1
@@ -65,7 +68,7 @@ def parse_patch(patch_file):
                 if hline.startswith('+'):
                     patched_lines.append(line_offset)
                 line_offset += 1
-            target_lines[p.target].extend(patched_lines)
+            target_lines[re.sub(PATH_FIX, '', p.target)].extend(patched_lines)
     return target_lines
 
 
@@ -75,6 +78,7 @@ def generate_css(targets, target_lines):
     coverage_files = os.listdir(coverage_html_dir)
 
     for target in targets:
+        target = re.sub(PATH_FIX, '', target)
         target_name = target.replace('/', '_')
         fname = target_name.replace(".py", ".css")
         html_name = target_name.replace(".py", ".html")
