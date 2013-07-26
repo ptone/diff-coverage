@@ -24,15 +24,16 @@ for comparison:
 
     git diff master > /path/to/my_patch.diff
 
-then from inside this tool's directory:
+then from inside this tool's directory, you need to have your patched version of
+django on your python path, for example if you use a django-dev virtualenv:
 
 .. code-block:: console
 
     python diff_coverage.py /path/to/my_patch.diff
 
-The script will output files with patched, untested lines and generate an html
-report with those files and the lines highlighted (with a red line number)
-
+The script will write to stdout files with patched, untested lines and generate
+an html report with those files and the lines highlighted (with a red line
+number) in the current working directory.
 
 
 
