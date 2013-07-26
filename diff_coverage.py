@@ -118,6 +118,8 @@ if __name__ == "__main__":
 
     for t in target_lines.keys():
         path = os.path.join(django_path, t)
+        if not path.endswith('.py'):
+            continue
         f, exe, exl, mis, misr = cov.analysis2(path)
         missing_patched = set(mis) & set(target_lines[t])
         if missing_patched:
